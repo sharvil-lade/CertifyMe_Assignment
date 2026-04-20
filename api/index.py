@@ -1,16 +1,10 @@
-﻿import sys
-import os
+import sys
 from pathlib import Path
 
-# Add backend directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
+BACKEND_DIR = Path(__file__).resolve().parent.parent / "backend"
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 
 from app import app
 
-# Vercel serverless WSGI handler
-def handler(request):
-    """WSGI handler for Vercel serverless functions"""
-    return app(request)
-
-# Also export app directly for compatibility
 __all__ = ["app"]

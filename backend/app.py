@@ -32,11 +32,33 @@ def normalize_database_uri(raw_uri: str | None) -> str | None:
     return raw_uri
 
 
+class ApiPrefixMiddleware:
+    """Allow the same Flask routes to work with and without a /api prefix."""
+
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        path = environ.get("PATH_INFO", "")
+        if path == "/api":
+            environ["PATH_INFO"] = "/"
+        elif path.startswith("/api/"):
+            environ["PATH_INFO"] = path[4:] or "/"
+        return self.wsgi_app(environ, start_response)
+
+
+def default_database_uri() -> str:
+    if os.getenv("VERCEL"):
+        return "sqlite:////tmp/admin_portal.db"
+    return "sqlite:///admin_portal.db"
+
+
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": ["*"], "methods": ["*"], "allow_headers": ["*"]}})
+app.wsgi_app = ApiPrefixMiddleware(app.wsgi_app)
 
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "change-me-in-production")
-app.config["SQLALCHEMY_DATABASE_URI"] = normalize_database_uri(os.getenv("SUPABASE_DB_URL")) or "sqlite:///admin_portal.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = normalize_database_uri(os.getenv("SUPABASE_DB_URL")) or default_database_uri()
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
@@ -473,8 +495,15 @@ def delete_opportunity(opportunity_id: int):
     return jsonify({"message": "Opportunity deleted successfully."})
 
 
-with app.app_context():
-    db.create_all()
+def initialize_database():
+    with app.app_context():
+        try:
+            db.create_all()
+        except Exception:
+            app.logger.exception("Database initialization failed during startup.")
+
+
+initialize_database()
 
 
 if __name__ == "__main__":

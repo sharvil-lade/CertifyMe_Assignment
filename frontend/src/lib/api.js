@@ -1,4 +1,4 @@
-﻿const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 export async function apiRequest(url, options = {}) {
   const config = { method: "GET", credentials: "include", ...options };
@@ -11,7 +11,6 @@ export async function apiRequest(url, options = {}) {
   config.headers = headers;
 
   const fullUrl = url.startsWith("http") ? url : `${API_URL}${url}`;
-
   const response = await fetch(fullUrl, config);
   const data = await response.json().catch(() => ({}));
 
