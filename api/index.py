@@ -7,7 +7,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
 
 from app import app
 
-# Vercel serverless handler
+# Vercel serverless WSGI handler
 def handler(request):
-    """Handle Vercel serverless requests"""
+    """WSGI handler for Vercel serverless functions"""
     return app(request)
+
+# Also export app directly for compatibility
+__all__ = ["app"]
