@@ -1,4 +1,4 @@
-import hashlib
+﻿import hashlib
 import os
 import re
 import secrets
@@ -8,6 +8,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, session
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
@@ -32,6 +33,7 @@ def normalize_database_uri(raw_uri: str | None) -> str | None:
 
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": ["*"], "methods": ["*"], "allow_headers": ["*"]}})
 
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "change-me-in-production")
 app.config["SQLALCHEMY_DATABASE_URI"] = normalize_database_uri(os.getenv("SUPABASE_DB_URL")) or "sqlite:///admin_portal.db"
@@ -477,3 +479,5 @@ with app.app_context():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
